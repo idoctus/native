@@ -401,7 +401,15 @@ bool _isValidObject(ObjectPtr ptr) {
 
 final _allClasses = <ObjectPtr>{};
 
+const _skipClassListValidation = true;
+
 bool _isValidClass(ObjectPtr clazz, {bool forceReloadClasses = false}) {
+  // iDoctus fork: skip the class-list scan. The objc_copyClassList call below
+  // deadlocks inside the iOS 27.1 simulator runtime (the one the iPhone Duo
+  // simulator uses) when another thread is initialising Swift metadata, which
+  // left debug builds stuck on the launch screen. This validation only runs
+  // behind asserts, so release and profile builds are unaffected.
+  if (_skipClassListValidation) return true;
   if (!forceReloadClasses && _allClasses.contains(clazz)) return true;
 
   // If the class is missing from the list, it either means we haven't created
